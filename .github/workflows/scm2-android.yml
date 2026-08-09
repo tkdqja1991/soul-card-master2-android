@@ -1,0 +1,54 @@
+name: Build SCM2 Android APK
+on:
+  workflow_dispatch:
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown,aarch64-linux-android
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
+      - name: Install web dependencies
+        run: npm ci
+      - name: Build bundled web frontend
+        run: npm run build:prod
+      - name: Install Tauri CLI
+        uses: taiki-e/install-action@v2
+        with:
+          tool: tauri-cli
+      - name: Select Android NDK
+        shell: bash
+        run: |
+          ndk_home=${ANDROID_NDK_LATEST_HOME:-$(find "$ANDROID_HOME/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)}
+          echo "ANDROID_NDK_HOME=$ndk_home" >> "$GITHUB_ENV"
+          echo "NDK_HOME=$ndk_home" >> "$GITHUB_ENV"
+      - name: Initialize Android project
+        working-directory: wie_app
+        run: cargo tauri android init --ci
+      - name: Build ARM64 APK
+        uses: tauri-apps/tauri-action@v1
+        with:
+          tauriScript: cargo tauri
+          projectPath: wie_app
+          mobile: android
+          args: --config '{"build":{"beforeBuildCommand":""}}' --target aarch64 --apk --ci
+      - name: Collect APK
+        run: |
+          mkdir -p dist
+          cp "$(find wie_app/gen/android/app/build/outputs/apk -type f -name '*.apk' -print -quit)" dist/SoulCardMaster2-WIE-arm64.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SoulCardMaster2-Android-APK
+          path: dist/SoulCardMaster2-WIE-arm64.apk
+          if-no-files-found: error

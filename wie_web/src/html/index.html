@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>소울카드마스터2</title>
+    <link rel="stylesheet" href="@css/style.css" />
+    <script src="@ts/index.ts" defer="defer"></script>
+  </head>
+  <body>
+    <main class="scm2-app">
+      <header class="scm2-header">
+        <strong>소울카드마스터2</strong>
+        <span id="status">준비 중…</span>
+        <button id="settings-toggle" class="settings-toggle" aria-label="설정">⚙</button>
+      </header>
+
+      <div class="canvas-wrapper">
+        <canvas id="canvas" width="240" height="320"></canvas>
+        <div id="settings-panel" class="settings-panel">
+          <label>🎵 MIDI <input type="range" id="volume-midi" min="0" max="100" value="50" /></label>
+          <label>🔊 효과음 <input type="range" id="volume-pcm" min="0" max="100" value="50" /></label>
+        </div>
+      </div>
+
+      <section class="button-container" aria-label="게임 키패드">
+        <p><button data-key="UP">▲</button></p>
+        <p><button data-key="LEFT">◀</button><button data-key="OK" class="ok">OK</button><button data-key="RIGHT">▶</button></p>
+        <p><button data-key="DOWN">▼</button></p>
+        <p class="utility"><button data-key="CLR">CLR</button></p>
+        <p><button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button></p>
+        <p><button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button></p>
+        <p><button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button></p>
+        <p><button data-key="*">*</button><button data-key="0">0</button><button data-key="#">#</button></p>
+      </section>
+    </main>
+  </body>
+</html>

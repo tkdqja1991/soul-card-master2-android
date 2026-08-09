@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "소울카드마스터2",
+  "version": "0.1.0",
+  "identifier": "com.scm2.wie",
+  "build": {
+    "frontendDist": "../wie_web/dist",
+    "devUrl": "http://localhost:8080",
+    "beforeDevCommand": "npm start",
+    "beforeBuildCommand": "npm run build:prod"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "소울카드마스터2",
+        "width": 480,
+        "height": 900,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "capabilities": [
+        {
+          "identifier": "default",
+          "description": "enables the default permissions",
+          "windows": [
+            "main"
+          ],
+          "permissions": [
+            "core:default"
+          ]
+        }
+      ],
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.png",
+      "icons/Square310x310Logo.png",
+      "icons/icon.ico"
+    ]
+  }
+}
