@@ -37,7 +37,8 @@ impl URL {
     }
 
     async fn find(jvm: &Jvm, _: &mut WieJvmContext, _: ClassInstanceRef<String>) -> JvmResult<ClassInstanceRef<Self>> {
-        Err(jvm.exception("org/kwis/msf/io/SchemeNotFoundException", "Network is not supported").await)
+        let socket = jvm.new_class("net/wie/FakeSocket", "()V", ()).await?;
+        Ok(socket.into())
     }
 }
 
