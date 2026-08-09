@@ -1,4 +1,5 @@
 name: Build SCM2 Android APK
+
 on:
   workflow_dispatch:
 
@@ -9,33 +10,42 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: actions/setup-java@v4
+
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
+
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown,aarch64-linux-android
+
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
+
       - name: Install web dependencies
         run: npm ci
+
       - name: Build bundled web frontend
         run: npm run build:prod
+
       - name: Install Tauri CLI
         uses: taiki-e/install-action@v2
         with:
           tool: tauri-cli
+
       - name: Select Android NDK
         shell: bash
         run: |
           ndk_home=${ANDROID_NDK_LATEST_HOME:-$(find "$ANDROID_HOME/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)}
           echo "ANDROID_NDK_HOME=$ndk_home" >> "$GITHUB_ENV"
           echo "NDK_HOME=$ndk_home" >> "$GITHUB_ENV"
+
       - name: Initialize Android project
         working-directory: wie_app
         run: cargo tauri android init --ci
+
       - name: Build ARM64 APK
         uses: tauri-apps/tauri-action@v1
         with:
@@ -43,12 +53,29 @@ jobs:
           projectPath: wie_app
           mobile: android
           args: --config '{"build":{"beforeBuildCommand":""}}' --target aarch64 --apk --ci
+
       - name: Collect APK
+        shell: bash
         run: |
           mkdir -p dist
-          cp "$(find wie_app/gen/android/app/build/outputs/apk -type f -name '*.apk' -print -quit)" dist/SoulCardMaster2-WIE-arm64.apk
+          apk="$(find wie_app/gen/android/app/build/outputs/apk -type f -name '*.apk' -print -quit)"
+          test -n "$apk"
+          cp "$apk" dist/SoulCardMaster2-WIE-arm64-unsigned.apk
+
+      - name: Create signing keystore
+        run: |
+          keytool -genkeypair -v             -keystore scm2-release.jks             -storepass scm2android             -keypass scm2android             -alias scm2             -keyalg RSA             -keysize 2048             -validity 10000             -dname "CN=SoulCardMaster2, OU=SCM2, O=SCM2, L=Seoul, ST=Seoul, C=KR"
+
+      - name: Sign APK
+        shell: bash
+        run: |
+          BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)"
+          "$BUILD_TOOLS/zipalign" -f -p 4             dist/SoulCardMaster2-WIE-arm64-unsigned.apk             dist/SoulCardMaster2-WIE-arm64-aligned.apk
+          "$BUILD_TOOLS/apksigner" sign             --ks scm2-release.jks             --ks-pass pass:scm2android             --key-pass pass:scm2android             --ks-key-alias scm2             --out dist/SoulCardMaster2-WIE-arm64-signed.apk             dist/SoulCardMaster2-WIE-arm64-aligned.apk
+          "$BUILD_TOOLS/apksigner" verify --verbose             dist/SoulCardMaster2-WIE-arm64-signed.apk
+
       - uses: actions/upload-artifact@v4
         with:
-          name: SoulCardMaster2-Android-APK
-          path: dist/SoulCardMaster2-WIE-arm64.apk
+          name: SoulCardMaster2-Android-Signed-APK
+          path: dist/SoulCardMaster2-WIE-arm64-signed.apk
           if-no-files-found: error
