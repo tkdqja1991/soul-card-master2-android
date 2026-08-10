@@ -18,6 +18,19 @@ const setStatus = (message: string) => {
   if (el) el.textContent = message;
 };
 
+const installDebugConsoleMirror = () => {
+  for (const level of ["log", "info", "warn", "error"] as const) {
+    const original = console[level].bind(console);
+    console[level] = (...args: unknown[]) => {
+      original(...args);
+      const message = args.map(String).join(" ");
+      if (message.includes("SCM2 URL.find:")) {
+        setStatus(message);
+      }
+    };
+  }
+};
+
 const bindControls = (wie_web: WieWeb) => {
   for (const button of document.querySelectorAll("button[data-key]")) {
     const down = (e: Event) => {
@@ -92,6 +105,7 @@ const bootBundledGame = async () => {
 };
 
 const main = async () => {
+  installDebugConsoleMirror();
   initSettings();
   try {
     await bootBundledGame();

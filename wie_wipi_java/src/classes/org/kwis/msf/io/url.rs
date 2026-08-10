@@ -3,6 +3,7 @@ use alloc::vec;
 use java_class_proto::JavaMethodProto;
 use java_constants::MethodAccessFlags;
 use java_runtime::classes::java::lang::String;
+use jvm::runtime::JavaLangString;
 use jvm::{ClassInstanceRef, Jvm, Result as JvmResult};
 
 use wie_jvm_support::{WieJavaClassProto, WieJvmContext};
@@ -36,7 +37,9 @@ impl URL {
         Ok(())
     }
 
-    async fn find(jvm: &Jvm, _: &mut WieJvmContext, _: ClassInstanceRef<String>) -> JvmResult<ClassInstanceRef<Self>> {
+    async fn find(jvm: &Jvm, _: &mut WieJvmContext, name: ClassInstanceRef<String>) -> JvmResult<ClassInstanceRef<Self>> {
+        let name = JavaLangString::to_rust_string(jvm, &name).await?;
+        tracing::warn!("SCM2 URL.find: {}", name);
         let socket = jvm.new_class("net/wie/FakeSocket", "()V", ()).await?;
         Ok(socket.into())
     }
@@ -47,6 +50,7 @@ mod tests {
     use alloc::boxed::Box;
 
     use java_runtime::classes::java::lang::String;
+use jvm::runtime::JavaLangString;
     use jvm::{ClassInstanceRef, JavaError, Result as JvmResult, runtime::JavaLangString};
 
     use test_utils::run_jvm_test;
