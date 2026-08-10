@@ -37,8 +37,18 @@ impl NullOutputStream {
         _: &Jvm,
         _: &mut WieJvmContext,
         _: ClassInstanceRef<Self>,
-        _: i32,
+        byte: i32,
     ) -> JvmResult<()> {
+        tracing::warn!(
+            "SCM2 SOCKET WRITE: dec={} hex={:02X} char={}",
+            byte & 0xff,
+            byte & 0xff,
+            if (32..=126).contains(&(byte & 0xff)) {
+                char::from_u32((byte & 0xff) as u32).unwrap_or('.')
+            } else {
+                '.'
+            }
+        );
         Ok(())
     }
 
