@@ -25,7 +25,9 @@ const installDebugConsoleMirror = () => {
       original(...args);
       const message = args.map(String).join(" ");
       if (message.includes("SCM2 URL.find:")) {
-        setStatus(message);
+        const pos = message.indexOf("SCM2 URL.find:");
+        const urlMessage = message.slice(pos);
+        setStatus(urlMessage.replaceAll("/", "/\n"));
       }
     };
   }
