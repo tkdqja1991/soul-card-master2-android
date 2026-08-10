@@ -32,7 +32,7 @@ impl Network {
     async fn connect(_: &Jvm, _: &mut WieJvmContext) -> JvmResult<i32> {
         tracing::warn!("stub org.kwis.msf.io.Network::connect()");
 
-        Ok(-1)
+        Ok(0)
     }
 
     async fn disconnect(_: &Jvm, _: &mut WieJvmContext) -> JvmResult<()> {
