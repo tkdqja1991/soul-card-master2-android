@@ -19,18 +19,26 @@ const setStatus = (message: string) => {
 };
 
 const installDebugConsoleMirror = () => {
+  const scm2Logs: string[] = [];
+
+  const addScm2Log = (message: string) => {
+    scm2Logs.push(message);
+    if (scm2Logs.length > 12) scm2Logs.shift();
+    setStatus(scm2Logs.join("\n"));
+  };
+
   for (const level of ["log", "info", "warn", "error"] as const) {
     const original = console[level].bind(console);
     console[level] = (...args: unknown[]) => {
       original(...args);
       const message = args.map(String).join(" ");
+
       if (message.includes("SCM2 URL.find:")) {
         const pos = message.indexOf("SCM2 URL.find:");
-        const urlMessage = message.slice(pos);
-        setStatus(urlMessage.replaceAll("/", "/\n"));
+        addScm2Log(message.slice(pos));
       } else if (message.includes("SCM2 SOCKET:")) {
         const pos = message.indexOf("SCM2 SOCKET:");
-        setStatus(message.slice(pos));
+        addScm2Log(message.slice(pos));
       }
     };
   }
