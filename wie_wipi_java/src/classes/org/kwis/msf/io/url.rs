@@ -40,7 +40,9 @@ impl URL {
     async fn find(jvm: &Jvm, _: &mut WieJvmContext, name: ClassInstanceRef<String>) -> JvmResult<ClassInstanceRef<Self>> {
         let name = JavaLangString::to_rust_string(jvm, &name).await?;
         tracing::warn!("SCM2 URL.find: {}", name);
+        tracing::warn!("SCM2 URL.find: BEFORE FakeSocket");
         let socket = jvm.new_class("net/wie/FakeSocket", "()V", ()).await?;
+        tracing::warn!("SCM2 URL.find: AFTER FakeSocket");
         Ok(socket.into())
     }
 }
