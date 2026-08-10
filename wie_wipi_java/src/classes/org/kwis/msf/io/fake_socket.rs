@@ -84,6 +84,7 @@ impl FakeSocket {
         _: &mut WieJvmContext,
         this: ClassInstanceRef<Self>,
     ) -> JvmResult<ClassInstanceRef<Self>> {
+        tracing::warn!("SCM2 SOCKET: accept");
         Ok(this)
     }
 
@@ -92,6 +93,7 @@ impl FakeSocket {
         _: &mut WieJvmContext,
         _: ClassInstanceRef<Self>,
     ) -> JvmResult<()> {
+        tracing::warn!("SCM2 SOCKET: close");
         Ok(())
     }
 
@@ -100,6 +102,7 @@ impl FakeSocket {
         _: &mut WieJvmContext,
         _: ClassInstanceRef<Self>,
     ) -> JvmResult<ClassInstanceRef<InputStream>> {
+        tracing::warn!("SCM2 SOCKET: getInputStream");
         let empty = jvm.instantiate_array("B", 0).await?;
         let stream = jvm
             .new_class("java/io/ByteArrayInputStream", "([B)V", (empty,))
@@ -128,6 +131,7 @@ impl FakeSocket {
         _: &mut WieJvmContext,
         _: ClassInstanceRef<Self>,
     ) -> JvmResult<ClassInstanceRef<OutputStream>> {
+        tracing::warn!("SCM2 SOCKET: getOutputStream");
         let stream = jvm.new_class("net/wie/NullOutputStream", "()V", ()).await?;
         Ok(stream.into())
     }
@@ -137,6 +141,7 @@ impl FakeSocket {
         _: &mut WieJvmContext,
         _: ClassInstanceRef<Self>,
     ) -> JvmResult<bool> {
+        tracing::warn!("SCM2 SOCKET: isStream");
         Ok(true)
     }
 
@@ -146,6 +151,7 @@ impl FakeSocket {
         _: ClassInstanceRef<Self>,
         _: ClassInstanceRef<Object>,
     ) -> JvmResult<()> {
+        tracing::warn!("SCM2 SOCKET: recv");
         Ok(())
     }
 
@@ -155,6 +161,7 @@ impl FakeSocket {
         _: ClassInstanceRef<Self>,
         _: ClassInstanceRef<Object>,
     ) -> JvmResult<()> {
+        tracing::warn!("SCM2 SOCKET: send");
         Ok(())
     }
 }
