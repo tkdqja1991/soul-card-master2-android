@@ -118,6 +118,7 @@ impl FilesystemOverlay {
 
     pub async fn read(&self, path: &str, offset: usize, count: usize, buf: &mut [u8]) -> Option<usize> {
         let normalized = normalize_guest_path(path)?;
+        tracing::info!("FS READ path={} offset={} count={}", normalized, offset, count);
 
         let plat_fs = self.platform.filesystem();
         if plat_fs.exists(&self.aid, &normalized).await {
@@ -138,6 +139,7 @@ impl FilesystemOverlay {
         let Some(normalized) = normalize_guest_path(path) else {
             return 0;
         };
+        tracing::info!("FS WRITE path={} offset={} len={}", normalized, offset, data.len());
         if !self.materialize_virtual(&normalized).await {
             return 0;
         }
@@ -148,6 +150,7 @@ impl FilesystemOverlay {
         let Some(normalized) = normalize_guest_path(path) else {
             return false;
         };
+        tracing::info!("FS TRUNCATE path={} len={}", normalized, len);
         if !self.materialize_virtual(&normalized).await {
             return false;
         }
