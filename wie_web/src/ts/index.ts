@@ -54,7 +54,10 @@ const startUpdateLoop = (wie_web: WieWeb) => {
       wie_web.update();
       requestAnimationFrame(update);
     } catch (e) {
-      setStatus(`실행 오류: ${String(e)}`);
+      const detail = e instanceof Error
+        ? `${e.name}: ${e.message}\n${e.stack ?? "(stack 없음)"}`
+        : String(e);
+      setStatus(`실행 오류:\n${detail}`);
       console.error(e);
     }
   };
