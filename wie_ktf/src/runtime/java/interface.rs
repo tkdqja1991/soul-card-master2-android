@@ -133,50 +133,92 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
 
     tracing::debug!("get_java_method({ptr_class:#x}, {fullname})");
 
+    let scm2_network_method =
+        fullname.name == "getInputStream" || fullname.name == "getOutputStream";
+
     // ptr_class might be vtable
     let first_item: u32 = read_generic(core, ptr_class)?;
 
-    tracing::warn!(
-        "SCM2 GET_METHOD: ptr_class={:#010x} first_item={:#010x} fullname={} fullname_ptr={:#010x}",
-        ptr_class,
-        first_item,
-        fullname,
-        ptr_fullname,
-    );
-
-    let method = if first_item != ptr_class + 4 {
+    if scm2_network_method {
         tracing::warn!(
-            "SCM2 GET_METHOD: treating {:#010x} as VTABLE, vtable={:#010x}",
+            "SCM2 GET_METHOD: ptr_class={:#010x} first_item={:#010x} fullname={} fullname_ptr={:#010x}",
             ptr_class,
             first_item,
+            fullname,
+            ptr_fullname,
         );
+    }
+
+    let method = if first_item != ptr_class + 4 {
+        if scm2_network_method {
+            tracing::warn!(
+                "SCM2 GET_METHOD: treating {:#010x} as VTABLE, vtable={:#010x}",
+                ptr_class,
+                first_item,
+            );
+        }
 
         // ptr_class is pointer to vtable
         let vtable = JavaVtable::from_raw(core, first_item);
         let method = vtable.find_method(&fullname.name, &fullname.descriptor)?;
 
+        if scm2_network_method {
+            tracing::warn!(
+                "SCM2 GET_METHOD: VTABLE lookup {} for {}{}",
+                if method.is_some() { "FOUND" } else { "NOT_FOUND" },
+                fullname.name,
+                fullname.descriptor,
+            );
+        }
+
         if method.is_none() {
-            return Err(WieError::FatalError(format!("Method {fullname} not found from {ptr_class:#x}")));
+            return Err(WieError::FatalError(format!(
+                "Method {fullname} not found from {ptr_class:#x}"
+            )));
         }
         method
     } else {
         let class = KtfJvmSupport::class_from_raw(core, ptr_class);
 
-        tracing::warn!(
-            "SCM2 GET_METHOD: treating {:#010x} as CLASS, name={}",
-            ptr_class,
-            class.name()?,
-        );
+        if scm2_network_method {
+            tracing::warn!(
+                "SCM2 GET_METHOD: treating {:#010x} as CLASS, name={}",
+                ptr_class,
+                class.name()?,
+            );
+        }
 
-        let method = find_java_method(&class, &fullname.name, &fullname.descriptor).await?;
+        let method =
+            find_java_method(&class, &fullname.name, &fullname.descriptor).await?;
+
+        if scm2_network_method {
+            tracing::warn!(
+                "SCM2 GET_METHOD: CLASS lookup {} for {}{}",
+                if method.is_some() { "FOUND" } else { "NOT_FOUND" },
+                fullname.name,
+                fullname.descriptor,
+            );
+        }
 
         if method.is_none() {
-            return Err(WieError::FatalError(format!("Method {fullname} not found from {}", class.name()?)));
+            return Err(WieError::FatalError(format!(
+                "Method {fullname} not found from {}",
+                class.name()?
+            )));
         }
 
         method
     };
+
     let method = method.unwrap();
+
+    if scm2_network_method {
+        tracing::warn!(
+            "SCM2 GET_METHOD: RESOLVED ptr_raw={:#010x}",
+            method.ptr_raw
+        );
+    }
+
     tracing::trace!("get_java_method result {:#x}", method.ptr_raw);
 
     Ok(method.ptr_raw)
