@@ -24,6 +24,25 @@ impl JavaVtable {
         let ptr_methods = items.iter().map(|x| x.method.ptr_raw).collect::<Vec<_>>();
         write_null_terminated_table(core, ptr_raw, &ptr_methods)?;
 
+        if class.name()? == "net/wie/FakeSocket" {
+            let has_input = items.iter().any(|x| {
+                x.name == "getInputStream"
+                    && x.descriptor == "()Ljava/io/InputStream;"
+            });
+            let has_output = items.iter().any(|x| {
+                x.name == "getOutputStream"
+                    && x.descriptor == "()Ljava/io/OutputStream;"
+            });
+
+            tracing::warn!(
+                "SCM2 SOCKET: FakeSocket VTABLE build ptr={:#010x} count={} input={} output={}",
+                ptr_raw,
+                items.len(),
+                has_input,
+                has_output,
+            );
+        }
+
         Ok(Self { ptr_raw, core: core.clone() })
     }
 
@@ -34,13 +53,51 @@ impl JavaVtable {
     pub fn find_method(&self, name: &str, descriptor: &str) -> Result<Option<JavaMethod>> {
         let items = read_null_terminated_table(&self.core, self.ptr_raw)?;
 
+        let scm2_target =
+            name == "getInputStream" || name == "getOutputStream";
+
+        if scm2_target {
+            tracing::warn!(
+                "SCM2 GET_METHOD: VTABLE inspect ptr={:#010x} count={} target={}{}",
+                self.ptr_raw,
+                items.len(),
+                name,
+                descriptor,
+            );
+        }
+
         for &ptr_method in &items {
             let method = JavaMethod::from_raw(ptr_method, &self.core);
             let method_name = method.name()?;
 
+            if scm2_target
+                && (method_name.name == name
+                    || method_name.descriptor == descriptor)
+            {
+                tracing::warn!(
+                    "SCM2 GET_METHOD: VTABLE candidate ptr={:#010x} {}{}",
+                    ptr_method,
+                    method_name.name,
+                    method_name.descriptor,
+                );
+            }
+
             if method_name.name == name && method_name.descriptor == descriptor {
+                if scm2_target {
+                    tracing::warn!(
+                        "SCM2 GET_METHOD: VTABLE exact FOUND ptr={:#010x}",
+                        ptr_method,
+                    );
+                }
                 return Ok(Some(method));
             }
+        }
+
+        if scm2_target {
+            tracing::warn!(
+                "SCM2 GET_METHOD: VTABLE target ABSENT ptr={:#010x}",
+                self.ptr_raw,
+            );
         }
 
         Ok(None)
