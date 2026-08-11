@@ -73,9 +73,15 @@ impl FakeSocket {
         _: &mut WieJvmContext,
         this: ClassInstanceRef<Self>,
     ) -> JvmResult<()> {
+        tracing::warn!("SCM2 SOCKET: FakeSocket.<init> ENTER");
+        tracing::warn!("SCM2 SOCKET: FakeSocket.<init> BEFORE Object.<init>");
+
         let _: () = jvm
             .invoke_special(&this, "java/lang/Object", "<init>", "()V", ())
             .await?;
+
+        tracing::warn!("SCM2 SOCKET: FakeSocket.<init> AFTER Object.<init>");
+        tracing::warn!("SCM2 SOCKET: FakeSocket.<init> EXIT");
         Ok(())
     }
 
