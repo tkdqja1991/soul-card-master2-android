@@ -34,6 +34,19 @@ impl JavaClassInstance {
 
         let instance = Self::instantiate(core, class, field_size)?;
 
+        if class.name()? == "net/wie/FakeSocket" {
+            let raw = instance.read_raw()?;
+            let fields_first: u32 = read_generic(core, raw.ptr_fields)?;
+
+            tracing::warn!(
+                "SCM2 SOCKET: FakeSocket INSTANCE ptr_raw={:#010x} ptr_fields={:#010x} ptr_class={:#010x} fields_first={:#010x}",
+                instance.ptr_raw,
+                raw.ptr_fields,
+                raw.ptr_class,
+                fields_first,
+            );
+        }
+
         tracing::trace!("Instantiated {} at {:#x}", class.name()?, instance.ptr_raw);
 
         Ok(instance)
