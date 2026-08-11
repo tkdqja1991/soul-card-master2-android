@@ -23,7 +23,7 @@ const installDebugConsoleMirror = () => {
 
   const addScm2Log = (message: string) => {
     scm2Logs.push(message);
-    if (scm2Logs.length > 12) scm2Logs.shift();
+    if (scm2Logs.length > 30) scm2Logs.shift();
     setStatus(scm2Logs.join("\n"));
   };
 
@@ -41,6 +41,9 @@ const installDebugConsoleMirror = () => {
         addScm2Log(message.slice(pos));
       } else if (message.includes("SCM2 GET_METHOD:")) {
         const pos = message.indexOf("SCM2 GET_METHOD:");
+        addScm2Log(message.slice(pos));
+      } else if (message.includes("SCM2 JAVA_BODY:")) {
+        const pos = message.indexOf("SCM2 JAVA_BODY:");
         addScm2Log(message.slice(pos));
       }
     };
