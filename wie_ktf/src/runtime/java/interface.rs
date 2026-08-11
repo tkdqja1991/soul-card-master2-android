@@ -135,7 +135,22 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
 
     // ptr_class might be vtable
     let first_item: u32 = read_generic(core, ptr_class)?;
+
+    tracing::warn!(
+        "SCM2 GET_METHOD: ptr_class={:#010x} first_item={:#010x} fullname={} fullname_ptr={:#010x}",
+        ptr_class,
+        first_item,
+        fullname,
+        ptr_fullname,
+    );
+
     let method = if first_item != ptr_class + 4 {
+        tracing::warn!(
+            "SCM2 GET_METHOD: treating {:#010x} as VTABLE, vtable={:#010x}",
+            ptr_class,
+            first_item,
+        );
+
         // ptr_class is pointer to vtable
         let vtable = JavaVtable::from_raw(core, first_item);
         let method = vtable.find_method(&fullname.name, &fullname.descriptor)?;
@@ -146,6 +161,13 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
         method
     } else {
         let class = KtfJvmSupport::class_from_raw(core, ptr_class);
+
+        tracing::warn!(
+            "SCM2 GET_METHOD: treating {:#010x} as CLASS, name={}",
+            ptr_class,
+            class.name()?,
+        );
+
         let method = find_java_method(&class, &fullname.name, &fullname.descriptor).await?;
 
         if method.is_none() {
