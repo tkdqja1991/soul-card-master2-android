@@ -314,3 +314,58 @@ body { font-family: system-ui, -apple-system, sans-serif; color: #eee; }
   .scm2-app .button-container > p > button { height: 29px; }
   .scm2-app .button-container { gap: 2px; }
 }
+
+/* SCM2 debug layout: keep tracing logs away from game screen */
+.scm2-header {
+  height: 120px;
+  display: block;
+  position: relative;
+  padding: 4px 42px 4px 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.scm2-header > strong {
+  display: block;
+  height: 18px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.scm2-header #status {
+  display: block;
+  height: 92px;
+  margin-top: 2px;
+  padding: 3px 5px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #000;
+  font-family: monospace;
+  font-size: 8px;
+  line-height: 10px;
+  opacity: 1;
+  text-align: left;
+}
+
+.scm2-app .canvas-wrapper {
+  width: min(58vw, 250px);
+  margin: 4px auto 0;
+}
+
+@media (max-height: 760px) {
+  .scm2-header {
+    height: 105px;
+  }
+
+  .scm2-header #status {
+    height: 77px;
+    font-size: 7px;
+    line-height: 9px;
+  }
+
+  .scm2-app .canvas-wrapper {
+    width: min(52vw, 220px);
+  }
+}
