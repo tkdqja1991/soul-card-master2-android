@@ -55,6 +55,7 @@ struct KtfJvmExceptionContext {
 struct KtfJvmSupportContext {
     ptr_vtables_base: u32,
     ptr_jvm_exception_context: u32,
+    ptr_vtable_classes_base: u32,
 }
 
 const SUPPORT_CONTEXT_BASE: u32 = 0x7fff0000;
@@ -79,9 +80,21 @@ impl KtfJvmSupport {
         let ptr_jvm_exception_context = Allocator::alloc(core, size_of::<KtfJvmExceptionContext>() as u32)?;
         write_generic(core, ptr_jvm_exception_context, jvm_exception_context)?;
 
+        let ptr_vtable_classes_base =
+            Allocator::alloc(core, (128 * size_of::<u32>()) as u32)?;
+
+        for index in 0..128usize {
+            write_generic(
+                core,
+                ptr_vtable_classes_base + (index * size_of::<u32>()) as u32,
+                0u32,
+            )?;
+        }
+
         let context_data = KtfJvmSupportContext {
             ptr_vtables_base: ptr_jvm_context + 12,
             ptr_jvm_exception_context,
+            ptr_vtable_classes_base,
         };
         write_generic(core, SUPPORT_CONTEXT_BASE, context_data)?;
 
@@ -187,14 +200,69 @@ impl KtfJvmSupport {
 
         for (index, &current_ptr_vtable) in ptr_vtables.iter().enumerate() {
             if ptr_vtable == current_ptr_vtable {
+                write_generic(
+                    core,
+                    context_data.ptr_vtable_classes_base
+                        + (index * size_of::<u32>()) as u32,
+                    class.ptr_raw,
+                )?;
+
                 return Ok(index as _);
             }
         }
 
         let index = ptr_vtables.len();
-        write_generic(core, context_data.ptr_vtables_base + (index * size_of::<u32>()) as u32, ptr_vtable)?;
+
+        write_generic(
+            core,
+            context_data.ptr_vtables_base + (index * size_of::<u32>()) as u32,
+            ptr_vtable,
+        )?;
+
+        write_generic(
+            core,
+            context_data.ptr_vtable_classes_base
+                + (index * size_of::<u32>()) as u32,
+            class.ptr_raw,
+        )?;
 
         Ok(index as _)
+    }
+
+    pub fn class_from_vtable_slot(
+        core: &ArmCore,
+        ptr_slot: u32,
+    ) -> Result<Option<JavaClassDefinition>> {
+        let context_data: KtfJvmSupportContext =
+            read_generic(core, SUPPORT_CONTEXT_BASE)?;
+
+        if ptr_slot < context_data.ptr_vtables_base {
+            return Ok(None);
+        }
+
+        let offset = ptr_slot - context_data.ptr_vtables_base;
+
+        if offset % size_of::<u32>() as u32 != 0 {
+            return Ok(None);
+        }
+
+        let index = (offset / size_of::<u32>() as u32) as usize;
+
+        if index >= 128 {
+            return Ok(None);
+        }
+
+        let ptr_class: u32 = read_generic(
+            core,
+            context_data.ptr_vtable_classes_base
+                + (index * size_of::<u32>()) as u32,
+        )?;
+
+        if ptr_class == 0 {
+            return Ok(None);
+        }
+
+        Ok(Some(JavaClassDefinition::from_raw(ptr_class, core)))
     }
 
     pub fn current_java_exception_handler(core: &mut ArmCore) -> Result<u32> {
