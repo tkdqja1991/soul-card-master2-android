@@ -307,11 +307,16 @@ impl KtfJvmSupport {
         let context_data: KtfJvmSupportContext =
             read_generic(core, SUPPORT_CONTEXT_BASE)?;
 
-        if context_data.scm2_fake_socket_slot == 0
-            || context_data.scm2_fake_socket_class == 0
-            || context_data.scm2_fake_socket_slot != ptr_slot
-        {
+        if context_data.scm2_fake_socket_class == 0 {
             return Ok(None);
+        }
+
+        if context_data.scm2_fake_socket_slot != ptr_slot {
+            tracing::warn!(
+                "SCM2 GET_METHOD: FakeSocket slot mismatch expected={:#010x} actual={:#010x}; using registered FakeSocket class",
+                context_data.scm2_fake_socket_slot,
+                ptr_slot,
+            );
         }
 
         Ok(Some(JavaClassDefinition::from_raw(
