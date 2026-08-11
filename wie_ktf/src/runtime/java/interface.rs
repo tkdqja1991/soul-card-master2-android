@@ -158,9 +158,9 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
             );
         }
 
-        // ptr_class is pointer to vtable
+        // ptr_class may actually be a Java object instance.
         let vtable = JavaVtable::from_raw(core, first_item);
-        let method = vtable.find_method(&fullname.name, &fullname.descriptor)?;
+        let mut method = vtable.find_method(&fullname.name, &fullname.descriptor)?;
 
         if scm2_network_method {
             tracing::warn!(
@@ -171,11 +171,50 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
             );
         }
 
+        // SCM2 passes the FakeSocket instance pointer here.
+        // JavaClassInstance layout is [ptr_fields, ptr_class], so retry
+        // lookup using the class pointer stored in the second word.
+        if method.is_none() && scm2_network_method {
+            let instance_class_ptr: u32 = read_generic(core, ptr_class + 4)?;
+            let instance_class_first: u32 = read_generic(core, instance_class_ptr)?;
+
+            tracing::warn!(
+                "SCM2 GET_METHOD: INSTANCE fallback class={:#010x} first={:#010x}",
+                instance_class_ptr,
+                instance_class_first,
+            );
+
+            if instance_class_first == instance_class_ptr + 4 {
+                let instance_class =
+                    KtfJvmSupport::class_from_raw(core, instance_class_ptr);
+
+                tracing::warn!(
+                    "SCM2 GET_METHOD: INSTANCE class name={}",
+                    instance_class.name()?,
+                );
+
+                method = find_java_method(
+                    &instance_class,
+                    &fullname.name,
+                    &fullname.descriptor,
+                )
+                .await?;
+
+                tracing::warn!(
+                    "SCM2 GET_METHOD: INSTANCE lookup {} for {}{}",
+                    if method.is_some() { "FOUND" } else { "NOT_FOUND" },
+                    fullname.name,
+                    fullname.descriptor,
+                );
+            }
+        }
+
         if method.is_none() {
             return Err(WieError::FatalError(format!(
                 "Method {fullname} not found from {ptr_class:#x}"
             )));
         }
+
         method
     } else {
         let class = KtfJvmSupport::class_from_raw(core, ptr_class);
