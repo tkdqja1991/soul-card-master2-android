@@ -393,7 +393,36 @@ where
         let mut context = self.context.clone();
         let (_, lr) = core.read_pc_lr()?;
 
-        let result = self.proto.body.call(&self.jvm, &mut context, args.into_boxed_slice()).await;
+        let scm2_socket_method =
+            self.proto.name == "getInputStream"
+                || self.proto.name == "getOutputStream"
+                || self.proto.name == "send"
+                || self.proto.name == "recv";
+
+        if scm2_socket_method {
+            tracing::warn!(
+                "SCM2 JAVA_BODY: ENTER {}{} lr={:#010x}",
+                self.proto.name,
+                self.proto.descriptor,
+                lr,
+            );
+        }
+
+        let result = self
+            .proto
+            .body
+            .call(&self.jvm, &mut context, args.into_boxed_slice())
+            .await;
+
+        if scm2_socket_method {
+            tracing::warn!(
+                "SCM2 JAVA_BODY: RETURN {} for {}{}",
+                if result.is_ok() { "OK" } else { "ERR" },
+                self.proto.name,
+                self.proto.descriptor,
+            );
+        }
+
         if let Err(JavaError::JavaException(x)) = result {
             // if we executed this from rust code, we should propagate this down
             if lr == RUN_FUNCTION_LR {
