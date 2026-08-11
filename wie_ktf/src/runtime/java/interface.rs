@@ -171,6 +171,42 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
             );
         }
 
+        // SCM2 FakeSocket has a dynamically-created Rust JVM class.
+        // Remember its exact vtable slot at instantiation time and use
+        // that class metadata when the AOT vtable cannot resolve it.
+        if method.is_none() && scm2_network_method {
+            if let Some(fake_socket_class) =
+                KtfJvmSupport::scm2_fake_socket_class_for_slot(
+                    core,
+                    ptr_class,
+                )?
+            {
+                tracing::warn!(
+                    "SCM2 GET_METHOD: FakeSocket fallback name={} ptr={:#010x}",
+                    fake_socket_class.name()?,
+                    fake_socket_class.ptr_raw,
+                );
+
+                method = find_java_method(
+                    &fake_socket_class,
+                    &fullname.name,
+                    &fullname.descriptor,
+                )
+                .await?;
+
+                tracing::warn!(
+                    "SCM2 GET_METHOD: FakeSocket fallback {} for {}{}",
+                    if method.is_some() {
+                        "FOUND"
+                    } else {
+                        "NOT_FOUND"
+                    },
+                    fullname.name,
+                    fullname.descriptor,
+                );
+            }
+        }
+
         // The ARM runtime passes a pointer to the global vtable slot.
         // If the vtable itself does not contain the method, recover the
         // Java class associated with that slot and resolve from metadata.

@@ -56,6 +56,8 @@ struct KtfJvmSupportContext {
     ptr_vtables_base: u32,
     ptr_jvm_exception_context: u32,
     ptr_vtable_classes_base: u32,
+    scm2_fake_socket_slot: u32,
+    scm2_fake_socket_class: u32,
 }
 
 const SUPPORT_CONTEXT_BASE: u32 = 0x7fff0000;
@@ -95,6 +97,8 @@ impl KtfJvmSupport {
             ptr_vtables_base: ptr_jvm_context + 12,
             ptr_jvm_exception_context,
             ptr_vtable_classes_base,
+            scm2_fake_socket_slot: 0,
+            scm2_fake_socket_class: 0,
         };
         write_generic(core, SUPPORT_CONTEXT_BASE, context_data)?;
 
@@ -263,6 +267,57 @@ impl KtfJvmSupport {
         }
 
         Ok(Some(JavaClassDefinition::from_raw(ptr_class, core)))
+    }
+
+    pub fn register_scm2_fake_socket(
+        core: &mut ArmCore,
+        ptr_class: u32,
+        fields_first: u32,
+    ) -> Result<()> {
+        let mut context_data: KtfJvmSupportContext =
+            read_generic(core, SUPPORT_CONTEXT_BASE)?;
+
+        // JavaClassInstanceFields.vtable_index is stored as:
+        // (vtable_index * 4) << 5 == vtable_index << 7
+        let vtable_index = fields_first >> 7;
+
+        let ptr_slot =
+            context_data.ptr_vtables_base
+                + vtable_index * size_of::<u32>() as u32;
+
+        context_data.scm2_fake_socket_slot = ptr_slot;
+        context_data.scm2_fake_socket_class = ptr_class;
+
+        write_generic(core, SUPPORT_CONTEXT_BASE, context_data)?;
+
+        tracing::warn!(
+            "SCM2 SOCKET: registered FakeSocket slot={:#010x} class={:#010x} index={}",
+            ptr_slot,
+            ptr_class,
+            vtable_index,
+        );
+
+        Ok(())
+    }
+
+    pub fn scm2_fake_socket_class_for_slot(
+        core: &ArmCore,
+        ptr_slot: u32,
+    ) -> Result<Option<JavaClassDefinition>> {
+        let context_data: KtfJvmSupportContext =
+            read_generic(core, SUPPORT_CONTEXT_BASE)?;
+
+        if context_data.scm2_fake_socket_slot == 0
+            || context_data.scm2_fake_socket_class == 0
+            || context_data.scm2_fake_socket_slot != ptr_slot
+        {
+            return Ok(None);
+        }
+
+        Ok(Some(JavaClassDefinition::from_raw(
+            context_data.scm2_fake_socket_class,
+            core,
+        )))
     }
 
     pub fn current_java_exception_handler(core: &mut ArmCore) -> Result<u32> {

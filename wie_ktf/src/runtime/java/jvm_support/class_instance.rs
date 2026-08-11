@@ -38,6 +38,12 @@ impl JavaClassInstance {
             let raw = instance.read_raw()?;
             let fields_first: u32 = read_generic(core, raw.ptr_fields)?;
 
+            KtfJvmSupport::register_scm2_fake_socket(
+                core,
+                raw.ptr_class,
+                fields_first,
+            )?;
+
             tracing::warn!(
                 "SCM2 SOCKET: FakeSocket INSTANCE ptr_raw={:#010x} ptr_fields={:#010x} ptr_class={:#010x} fields_first={:#010x}",
                 instance.ptr_raw,
