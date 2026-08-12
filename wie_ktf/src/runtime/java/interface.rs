@@ -336,6 +336,19 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
 
     let method = method.unwrap();
 
+    if fullname.name == "a" && fullname.descriptor == "()[B" {
+        let fn_body: u32 = read_generic(core, method.ptr_raw)?;
+        let ptr_owner: u32 = read_generic(core, method.ptr_raw + 4)?;
+
+        tracing::warn!(
+            "SCM2 GET_METHOD: CALLSITE PACKET a()[B method={:#010x} body={:#010x} owner={:#010x} ptr_class={:#010x}",
+            method.ptr_raw,
+            fn_body,
+            ptr_owner,
+            ptr_class,
+        );
+    }
+
     if scm2_network_method {
         tracing::warn!(
             "SCM2 GET_METHOD: RESOLVED ptr_raw={:#010x}",
