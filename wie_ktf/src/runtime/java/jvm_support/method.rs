@@ -399,12 +399,20 @@ where
                 || self.proto.name == "send"
                 || self.proto.name == "recv";
 
-        if scm2_socket_method {
+        let scm2_stream_method =
+            self.proto.name.starts_with("read")
+                || self.proto.name == "available"
+                || self.proto.name == "skip";
+
+        let scm2_trace_method = scm2_socket_method || scm2_stream_method;
+
+        if scm2_trace_method {
             tracing::warn!(
-                "SCM2 JAVA_BODY: ENTER {}{} lr={:#010x}",
+                "SCM2 JAVA_BODY: ENTER {}{} lr={:#010x} args={:?}",
                 self.proto.name,
                 self.proto.descriptor,
                 lr,
+                raw_args,
             );
         }
 
@@ -414,7 +422,7 @@ where
             .call(&self.jvm, &mut context, args.into_boxed_slice())
             .await;
 
-        if scm2_socket_method {
+        if scm2_trace_method {
             tracing::warn!(
                 "SCM2 JAVA_BODY: RETURN {} for {}{}",
                 if result.is_ok() { "OK" } else { "ERR" },
@@ -438,6 +446,15 @@ where
         } else {
             vec![codec.encode_word(&result.unwrap())]
         };
+
+        if scm2_stream_method {
+            tracing::warn!(
+                "SCM2 JAVA_BODY: RESULT {}{} raw={:?}",
+                self.proto.name,
+                self.proto.descriptor,
+                result,
+            );
+        }
 
         Ok(JavaMethodResult { result, next_pc: None })
     }
