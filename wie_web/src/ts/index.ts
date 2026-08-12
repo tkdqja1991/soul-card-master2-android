@@ -36,6 +36,9 @@ const installDebugConsoleMirror = () => {
       if (message.includes("SCM2 URL.find:")) {
         const pos = message.indexOf("SCM2 URL.find:");
         addScm2Log(message.slice(pos));
+      } else if (message.includes("SCM2 SOCKET WRITE_ARRAY:")) {
+        const pos = message.indexOf("SCM2 SOCKET WRITE_ARRAY:");
+        addScm2Log(message.slice(pos));
       } else if (message.includes("SCM2 SOCKET WRITE:")) {
         const pos = message.indexOf("SCM2 SOCKET WRITE:");
         addScm2Log(message.slice(pos));
