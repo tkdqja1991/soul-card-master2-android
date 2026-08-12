@@ -447,7 +447,7 @@ where
             vec![codec.encode_word(&result.unwrap())]
         };
 
-        if scm2_stream_method {
+        if scm2_trace_method {
             tracing::warn!(
                 "SCM2 JAVA_BODY: RESULT {}{} raw={:?}",
                 self.proto.name,
