@@ -155,9 +155,23 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
             lr,
         );
 
+        for reg in 0usize..13 {
+            let value = u32::get(core, reg);
+            let code = value & !1;
+
+            if (0x00100000..0x00140000).contains(&code) {
+                tracing::warn!(
+                    "SCM2 GET_METHOD: CALLSITE REG r{}={:#010x} code={:#010x}",
+                    reg,
+                    value,
+                    code,
+                );
+            }
+        }
+
         let sp = u32::get(core, 13);
 
-        for offset in (0u32..0x100).step_by(4) {
+        for offset in (0u32..0x600).step_by(4) {
             let value: u32 = match read_generic(core, sp + offset) {
                 Ok(value) => value,
                 Err(_) => continue,
