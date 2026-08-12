@@ -42,11 +42,8 @@ const installDebugConsoleMirror = () => {
       } else if (message.includes("SCM2 SOCKET:")) {
         const pos = message.indexOf("SCM2 SOCKET:");
         addScm2Log(message.slice(pos));
-      } else if (message.includes("SCM2 GET_METHOD:")) {
-        const pos = message.indexOf("SCM2 GET_METHOD:");
-        addScm2Log(message.slice(pos));
-      } else if (message.includes("SCM2 JAVA_BODY:")) {
-        const pos = message.indexOf("SCM2 JAVA_BODY:");
+      } else if (message.includes("SCM2 GET_METHOD: CALLSITE")) {
+        const pos = message.indexOf("SCM2 GET_METHOD: CALLSITE");
         addScm2Log(message.slice(pos));
       }
     };
