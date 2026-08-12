@@ -165,9 +165,7 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
 
             let code = value & !1;
 
-            if (value & 1) != 0
-                && (0x00100000..0x00134000).contains(&code)
-            {
+            if (0x00100000..0x00140000).contains(&code) {
                 tracing::warn!(
                     "SCM2 GET_METHOD: CALLSITE STACK sp+{:#04x}={:#010x} code={:#010x}",
                     offset,
