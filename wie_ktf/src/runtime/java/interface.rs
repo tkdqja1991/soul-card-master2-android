@@ -5,7 +5,12 @@ use alloc::{
     vec,
     vec::Vec,
 };
-use core::mem::size_of;
+use core::{
+    mem::size_of,
+    sync::atomic::{AtomicBool, Ordering},
+};
+
+static SCM2_SOCKET_INPUT_READY: AtomicBool = AtomicBool::new(false);
 
 use java_runtime::classes::java::util::Vector;
 use jvm::{ClassInstanceRef, Jvm, runtime::JavaLangString};
@@ -141,7 +146,15 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
             && (fullname.descriptor == "([B)I"
                 || fullname.descriptor == "([BII)I");
 
-    let scm2_trace_method = scm2_network_method || scm2_read_method;
+    if fullname.name == "getInputStream"
+        && fullname.descriptor == "()Ljava/io/InputStream;"
+    {
+        SCM2_SOCKET_INPUT_READY.store(true, Ordering::Relaxed);
+    }
+
+    let scm2_trace_method = scm2_network_method
+        || (scm2_read_method
+            && SCM2_SOCKET_INPUT_READY.load(Ordering::Relaxed));
 
     if scm2_trace_method {
         let (_, lr) = core.read_pc_lr()?;
@@ -188,6 +201,13 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
                 );
             }
         }
+    }
+
+    // getInputStream 이후 최초의 read 하나만 추적한다.
+    if scm2_read_method
+        && SCM2_SOCKET_INPUT_READY.load(Ordering::Relaxed)
+    {
+        SCM2_SOCKET_INPUT_READY.store(false, Ordering::Relaxed);
     }
 
     // ptr_class might be vtable
