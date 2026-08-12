@@ -154,6 +154,28 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
             r4,
             lr,
         );
+
+        let sp = u32::get(core, 13);
+
+        for offset in (0u32..0x100).step_by(4) {
+            let value: u32 = match read_generic(core, sp + offset) {
+                Ok(value) => value,
+                Err(_) => continue,
+            };
+
+            let code = value & !1;
+
+            if (value & 1) != 0
+                && (0x00100000..0x00134000).contains(&code)
+            {
+                tracing::warn!(
+                    "SCM2 GET_METHOD: CALLSITE STACK sp+{:#04x}={:#010x} code={:#010x}",
+                    offset,
+                    value,
+                    code,
+                );
+            }
+        }
     }
 
     // ptr_class might be vtable
