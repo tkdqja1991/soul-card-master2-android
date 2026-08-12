@@ -477,7 +477,73 @@ async fn get_field(core: &mut ArmCore, _: &mut (), ptr_class: u32, field_name: u
 
     let field_name = KtfJvmSupport::read_name(core, field_name)?;
 
-    let class = KtfJvmSupport::class_from_raw(core, ptr_class);
+    let scm2_socket_field =
+        field_name.descriptor == "Ljava/io/InputStream;"
+            || field_name.descriptor == "Ljava/io/OutputStream;"
+            || field_name.descriptor == "Lorg/kwis/msf/io/Socket;";
+
+    let first_item: u32 = read_generic(core, ptr_class)?;
+
+    if scm2_socket_field {
+        tracing::warn!(
+            "SCM2 GET_FIELD: ENTER ptr_class={:#010x} first_item={:#010x} field={}",
+            ptr_class,
+            first_item,
+            field_name,
+        );
+    }
+
+    // Normal case: ptr_class really is a JavaClassDefinition.
+    //
+    // SCM2/KTF AOT code can also pass a global vtable slot or, in some
+    // paths, an object instance. Recover the owning class in those cases,
+    // just like get_java_method() already does.
+    let class = if first_item == ptr_class.wrapping_add(4) {
+        if scm2_socket_field {
+            tracing::warn!("SCM2 GET_FIELD: CLASS direct");
+        }
+
+        KtfJvmSupport::class_from_raw(core, ptr_class)
+    } else if let Some(vtable_class) =
+        KtfJvmSupport::class_from_vtable_slot(core, ptr_class)?
+    {
+        if scm2_socket_field {
+            tracing::warn!(
+                "SCM2 GET_FIELD: VTABLE fallback class={} ptr={:#010x}",
+                vtable_class.name()?,
+                vtable_class.ptr_raw,
+            );
+        }
+
+        vtable_class
+    } else {
+        // Raw JavaClassInstance is:
+        //   +0 ptr_fields
+        //   +4 ptr_class
+        let instance_class: u32 = read_generic(core, ptr_class.wrapping_add(4))?;
+        let instance_class_first: u32 = read_generic(core, instance_class)?;
+
+        if instance_class_first == instance_class.wrapping_add(4) {
+            let instance_class = KtfJvmSupport::class_from_raw(core, instance_class);
+
+            if scm2_socket_field {
+                tracing::warn!(
+                    "SCM2 GET_FIELD: INSTANCE fallback class={} ptr={:#010x}",
+                    instance_class.name()?,
+                    instance_class.ptr_raw,
+                );
+            }
+
+            instance_class
+        } else {
+            if scm2_socket_field {
+                tracing::warn!("SCM2 GET_FIELD: fallback to original ptr_class");
+            }
+
+            KtfJvmSupport::class_from_raw(core, ptr_class)
+        }
+    };
+
     let field = class.field(&field_name.name, &field_name.descriptor, true)?;
     let field = if field.is_none() {
         class.field(&field_name.name, &field_name.descriptor, false)?
@@ -486,9 +552,21 @@ async fn get_field(core: &mut ArmCore, _: &mut (), ptr_class: u32, field_name: u
     };
 
     if let Some(x) = field {
+        if scm2_socket_field {
+            tracing::warn!(
+                "SCM2 GET_FIELD: RESOLVED field={} ptr_raw={:#010x} class={}",
+                field_name,
+                x.ptr_raw,
+                class.name()?,
+            );
+        }
+
         Ok(x.ptr_raw)
     } else {
-        Err(WieError::FatalError(format!("Field {field_name} not found from {}", class.name()?)))
+        Err(WieError::FatalError(format!(
+            "Field {field_name} not found from {}",
+            class.name()?
+        )))
     }
 }
 
