@@ -109,9 +109,20 @@ impl FakeSocket {
         _: ClassInstanceRef<Self>,
     ) -> JvmResult<ClassInstanceRef<InputStream>> {
         tracing::warn!("SCM2 SOCKET: getInputStream");
-        let empty = jvm.instantiate_array("B", 0).await?;
+        // SCM2 offline version-check response:
+        // 4-byte big-endian payload length (1), followed by payload 0x22.
+        let mut response = jvm.instantiate_array("B", 5).await?;
+        jvm.store_array(
+            &mut response,
+            0,
+            [0_i8, 0_i8, 0_i8, 1_i8, 0x22_i8],
+        )
+        .await?;
+
+        tracing::warn!("SCM2 SOCKET: injected response [00 00 00 01 22]");
+
         let stream = jvm
-            .new_class("java/io/ByteArrayInputStream", "([B)V", (empty,))
+            .new_class("java/io/ByteArrayInputStream", "([B)V", (response,))
             .await?;
         Ok(stream.into())
     }
