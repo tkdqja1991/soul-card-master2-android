@@ -11,7 +11,7 @@ use java_runtime::classes::java::util::Vector;
 use jvm::{ClassInstanceRef, Jvm, runtime::JavaLangString};
 use wipi_types::ktf::java::WIPIJBInterface;
 
-use wie_core_arm::{Allocator, ArmCore, EmulatedFunction, ResultWriter, SvcId};
+use wie_core_arm::{Allocator, ArmCore, EmulatedFunction, EmulatedFunctionParam, ResultWriter, SvcId};
 use wie_jvm_support::JvmSupport;
 use wie_util::{ByteRead, Result, WieError, read_generic, read_null_terminated_string_bytes, write_generic};
 
@@ -135,6 +135,26 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
 
     let scm2_network_method =
         fullname.name == "getInputStream" || fullname.name == "getOutputStream";
+
+    let scm2_read_method =
+        fullname.name == "read"
+            && (fullname.descriptor == "([B)I"
+                || fullname.descriptor == "([BII)I");
+
+    let scm2_trace_method = scm2_network_method || scm2_read_method;
+
+    if scm2_trace_method {
+        let (_, lr) = core.read_pc_lr()?;
+        let r4 = u32::get(core, 4);
+
+        tracing::warn!(
+            "SCM2 GET_METHOD: CALLSITE {}{} r4={:#010x} lr={:#010x}",
+            fullname.name,
+            fullname.descriptor,
+            r4,
+            lr,
+        );
+    }
 
     // ptr_class might be vtable
     let first_item: u32 = read_generic(core, ptr_class)?;
