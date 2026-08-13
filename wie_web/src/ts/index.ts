@@ -49,11 +49,11 @@ const installDebugConsoleMirror = () => {
         const pos = message.indexOf("SCM2 JAVA_BODY:");
         addScm2Log(message.slice(pos));
       } else if (
-        message.includes("SCM2 GET_METHOD: CALLSITE getInputStream") ||
-        message.includes("SCM2 GET_METHOD: CALLSITE getOutputStream") ||
-        message.includes("SCM2 GET_METHOD: CALLSITE read")
+        message.includes("SCM2 GET_METHOD:") &&
+        !message.includes("CALLSITE REG") &&
+        !message.includes("CALLSITE STACK")
       ) {
-        const pos = message.indexOf("SCM2 GET_METHOD: CALLSITE");
+        const pos = message.indexOf("SCM2 GET_METHOD:");
         addScm2Log(message.slice(pos));
       }
     };
