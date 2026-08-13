@@ -401,15 +401,19 @@ where
             .unwrap_or_else(|_| "<unknown>".to_string());
 
         let scm2_socket_method =
-            self.proto.name == "getInputStream"
-                || self.proto.name == "getOutputStream"
-                || self.proto.name == "send"
-                || self.proto.name == "recv";
+            owner_class == "net/wie/FakeSocket"
+                && (self.proto.name == "getInputStream"
+                    || self.proto.name == "getOutputStream"
+                    || self.proto.name == "send"
+                    || self.proto.name == "recv");
 
+        // SCM2 packet framing reads 4-byte lengths with read()I,
+        // then only very small payloads. Ignore noisy ZIP/resource reads.
         let scm2_stream_method =
-            self.proto.name.starts_with("read")
-                || self.proto.name == "available"
-                || self.proto.name == "skip";
+            (self.proto.name == "read" && self.proto.descriptor == "()I")
+                || (self.proto.name == "read"
+                    && self.proto.descriptor == "([BII)I"
+                    && raw_args.get(3).copied().unwrap_or(u32::MAX) <= 16);
 
         let scm2_trace_method = scm2_socket_method || scm2_stream_method;
 
