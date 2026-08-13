@@ -130,6 +130,9 @@ impl FakeSocket {
         let stream = jvm
             .new_class("java/io/ByteArrayInputStream", "([B)V", (response,))
             .await?;
+
+        tracing::warn!("SCM2 SOCKET: FakeSocket input stream object={stream:?}");
+
         Ok(stream.into())
     }
 
