@@ -65,7 +65,7 @@ impl JavaMethod {
         let ptr_raw = Allocator::alloc(core, size_of::<RawJavaMethod>() as u32)?;
 
         let access_flags = proto.access_flags;
-        let fn_method = Self::register_java_method(core, jvm, ptr_raw, proto, context, java_functions)?;
+        let fn_method = Self::register_java_method(core, jvm, ptr_raw, ptr_class, proto, context, java_functions)?;
 
         let (fn_body, fn_body_native) = if access_flags.contains(MethodAccessFlags::NATIVE) {
             (0, fn_method)
@@ -279,6 +279,7 @@ impl JavaMethod {
         core: &mut ArmCore,
         jvm: &Jvm,
         ptr_method: u32,
+        ptr_class: u32,
         proto: JavaMethodProto<C>,
         context: Context,
         java_functions: JavaSvcFunctions,
@@ -298,6 +299,7 @@ impl JavaMethod {
 
         let proxy = JavaMethodProxy {
             jvm: jvm.clone(),
+            ptr_class,
             proto,
             context,
             parameter_types,
@@ -363,6 +365,7 @@ where
     Context: Deref<Target = C> + DerefMut + Clone,
 {
     jvm: Jvm,
+    ptr_class: u32,
     proto: JavaMethodProto<C>,
     context: Context,
     parameter_types: Vec<JavaType>,
@@ -393,6 +396,10 @@ where
         let mut context = self.context.clone();
         let (_, lr) = core.read_pc_lr()?;
 
+        let owner_class = JavaClassDefinition::from_raw(self.ptr_class, core)
+            .name()
+            .unwrap_or_else(|_| "<unknown>".to_string());
+
         let scm2_socket_method =
             self.proto.name == "getInputStream"
                 || self.proto.name == "getOutputStream"
@@ -408,7 +415,8 @@ where
 
         if scm2_trace_method {
             tracing::warn!(
-                "SCM2 JAVA_BODY: ENTER {}{} lr={:#010x} args={:?}",
+                "SCM2 JAVA_BODY: ENTER {}.{}{} lr={:#010x} args={:?}",
+                owner_class,
                 self.proto.name,
                 self.proto.descriptor,
                 lr,
@@ -424,8 +432,9 @@ where
 
         if scm2_trace_method {
             tracing::warn!(
-                "SCM2 JAVA_BODY: RETURN {} for {}{}",
+                "SCM2 JAVA_BODY: RETURN {} for {}.{}{}",
                 if result.is_ok() { "OK" } else { "ERR" },
+                owner_class,
                 self.proto.name,
                 self.proto.descriptor,
             );
@@ -449,7 +458,8 @@ where
 
         if scm2_trace_method {
             tracing::warn!(
-                "SCM2 JAVA_BODY: RESULT {}{} raw={:?}",
+                "SCM2 JAVA_BODY: RESULT {}.{}{} raw={:?}",
+                owner_class,
                 self.proto.name,
                 self.proto.descriptor,
                 result,
