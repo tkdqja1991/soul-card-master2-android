@@ -370,9 +370,13 @@ async fn get_java_method(core: &mut ArmCore, _: &mut (), ptr_class: u32, ptr_ful
     }
 
     if scm2_network_method {
+        let fn_body: u32 = read_generic(core, method.ptr_raw)?;
+        let ptr_owner: u32 = read_generic(core, method.ptr_raw + 4)?;
         tracing::warn!(
-            "SCM2 GET_METHOD: RESOLVED ptr_raw={:#010x}",
-            method.ptr_raw
+            "SCM2 GET_METHOD: RESOLVED ptr_raw={:#010x} fn_body={:#010x} owner={:#010x}",
+            method.ptr_raw,
+            fn_body,
+            ptr_owner,
         );
     }
 
