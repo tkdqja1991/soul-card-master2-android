@@ -28,7 +28,13 @@ use wie_util::{ByteWrite, Result, WieError, read_generic, write_generic};
 use crate::runtime::java::jvm_support::JavaClassDefinition;
 use crate::runtime::{SVC_CATEGORY_JAVA, java::JavaSvcFunctions};
 
-use super::{KtfJvmSupport, class_instance::JavaClassInstance, name::JavaFullName, value::JavaValueCodec};
+use super::{
+    KtfJvmSupport,
+    array_class_instance::JavaArrayClassInstance,
+    class_instance::JavaClassInstance,
+    name::JavaFullName,
+    value::JavaValueCodec,
+};
 
 pub struct JavaMethod {
     pub ptr_raw: u32,
@@ -433,6 +439,22 @@ where
             .body
             .call(&self.jvm, &mut context, args.into_boxed_slice())
             .await;
+
+        if self.proto.name == "read"
+            && self.proto.descriptor == "([BII)I"
+            && raw_args.get(3).copied().unwrap_or(u32::MAX) <= 16
+        {
+            if let (Some(&ptr_array), Some(&off), Some(&len)) =
+                (raw_args.get(1), raw_args.get(2), raw_args.get(3))
+            {
+                let array = JavaArrayClassInstance::from_raw(ptr_array, core);
+                let mut payload = vec![0u8; len as usize];
+
+                if array.load_raw(off as usize, &mut payload).is_ok() {
+                    tracing::warn!("SCM2 JAVA_BODY: PAYLOAD {:02x?}", payload);
+                }
+            }
+        }
 
         if scm2_trace_method {
             tracing::warn!(
