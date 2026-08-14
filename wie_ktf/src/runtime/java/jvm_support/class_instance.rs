@@ -44,12 +44,20 @@ impl JavaClassInstance {
                 fields_first,
             )?;
 
+            // KTF AOT resolves the instance vtable relative to the start of
+            // InitParam2, while ptr_java_vtables begins three u32 words later.
+            // Apply that bias only to the SCM2 FakeSocket instance.
+            let aot_fields_first =
+                fields_first + (((3 * size_of::<u32>()) as u32) << 5);
+            write_generic(core, raw.ptr_fields, aot_fields_first)?;
+
             tracing::warn!(
-                "SCM2 SOCKET: FakeSocket INSTANCE ptr_raw={:#010x} ptr_fields={:#010x} ptr_class={:#010x} fields_first={:#010x}",
+                "SCM2 SOCKET: FakeSocket INSTANCE ptr_raw={:#010x} ptr_fields={:#010x} ptr_class={:#010x} fields_first={:#010x} aot_fields_first={:#010x}",
                 instance.ptr_raw,
                 raw.ptr_fields,
                 raw.ptr_class,
                 fields_first,
+                aot_fields_first,
             );
         }
 
