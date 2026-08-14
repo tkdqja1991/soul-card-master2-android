@@ -211,7 +211,9 @@ impl KtfJvmSupport {
                     class.ptr_raw,
                 )?;
 
-                return Ok(index as _);
+                // KTF AOT indexes vtables from the start of InitParam2.
+                // ptr_java_vtables begins after unk1/unk2/unk3, so add 3 words.
+                return Ok(index as u32 + 3);
             }
         }
 
@@ -230,7 +232,8 @@ impl KtfJvmSupport {
             class.ptr_raw,
         )?;
 
-        Ok(index as _)
+        // KTF AOT indexes vtables from the start of InitParam2.
+        Ok(index as u32 + 3)
     }
 
     pub fn class_from_vtable_slot(
@@ -277,9 +280,10 @@ impl KtfJvmSupport {
         let mut context_data: KtfJvmSupportContext =
             read_generic(core, SUPPORT_CONTEXT_BASE)?;
 
-        // JavaClassInstanceFields.vtable_index is stored as:
-        // (vtable_index * 4) << 5 == vtable_index << 7
-        let vtable_index = fields_first >> 7;
+        // The instance stores the KTF AOT index relative to InitParam2.
+        // ptr_vtables_base points at ptr_java_vtables[0], three u32 words later.
+        let encoded_vtable_index = fields_first >> 7;
+        let vtable_index = encoded_vtable_index - 3;
 
         let ptr_slot =
             context_data.ptr_vtables_base
