@@ -23,6 +23,7 @@ use wie_backend::System;
 use wie_core_arm::{Allocator, ArmCore};
 use wie_jvm_support::JvmSupport;
 use wie_util::{Result, WieError, read_generic, read_null_terminated_table, write_generic};
+use wie_util::{ByteRead, ByteWrite};
 
 use wipi_types::ktf::InitParam2;
 
@@ -296,6 +297,25 @@ impl KtfJvmSupport {
             ptr_class,
             vtable_index,
         );
+
+        // SCM2 offline patch:
+        // 0x12dacc is `beq 0x12dad0` after checking the version response.
+        // Turn it into an unconditional `b 0x12dad0`, but only when the
+        // expected original instruction is present.
+        let mut version_check_branch = [0u8; 2];
+        core.read_bytes(0x0012_dacc, &mut version_check_branch)?;
+
+        if version_check_branch == [0x00, 0xd0] {
+            core.write_bytes(0x0012_dacc, &[0x00, 0xe0])?;
+            tracing::warn!(
+                "SCM2 PATCH: version check forced success at 0x0012dacc"
+            );
+        } else {
+            tracing::warn!(
+                "SCM2 PATCH: version check NOT patched; unexpected bytes={:02x?}",
+                version_check_branch
+            );
+        }
 
         Ok(())
     }
