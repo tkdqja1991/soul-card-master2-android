@@ -110,22 +110,20 @@ impl FakeSocket {
         _: ClassInstanceRef<Self>,
     ) -> JvmResult<ClassInstanceRef<InputStream>> {
         tracing::warn!("SCM2 SOCKET: getInputStream");
-        // SCM2 offline handshake + version-check responses:
-        // frame 1: length=1, payload=[0x22]
-        // frame 2: length=3, payload=[0x73, 0x00, 0x00]
-        let mut response = jvm.instantiate_array("B", 12).await?;
+        // SCM2 offline version-check response:
+        // frame: length=3, payload=[0x73, 0x00, 0x00]
+        let mut response = jvm.instantiate_array("B", 7).await?;
         jvm.store_array(
             &mut response,
             0,
             [
-                0_i8, 0_i8, 0_i8, 1_i8, 0x22_i8,
                 0_i8, 0_i8, 0_i8, 3_i8, 0x73_i8, 0_i8, 0_i8,
             ],
         )
         .await?;
 
         tracing::warn!(
-            "SCM2 SOCKET: injected responses [00 00 00 01 22] [00 00 00 03 73 00 00]"
+            "SCM2 SOCKET: injected response [00 00 00 03 73 00 00]"
         );
 
         let stream = jvm
