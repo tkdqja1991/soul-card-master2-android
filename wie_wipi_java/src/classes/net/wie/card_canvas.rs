@@ -76,11 +76,11 @@ impl WIPIKeyCode {
 
     pub fn from_midp_raw(keycode: i32) -> i32 {
         match MIDPKeyCode::from_raw(keycode) {
-            Some(MIDPKeyCode::UP) => Self::UP as i32,
-            Some(MIDPKeyCode::DOWN) => Self::DOWN as i32,
-            Some(MIDPKeyCode::LEFT) => Self::LEFT as i32,
-            Some(MIDPKeyCode::RIGHT) => Self::RIGHT as i32,
-            Some(MIDPKeyCode::FIRE) => Self::FIRE as i32,
+            Some(MIDPKeyCode::UP) => 0x8d,
+            Some(MIDPKeyCode::DOWN) => 0x92,
+            Some(MIDPKeyCode::LEFT) => 0x8e,
+            Some(MIDPKeyCode::RIGHT) => 0x91,
+            Some(MIDPKeyCode::FIRE) => 0x83,
             Some(MIDPKeyCode::LEFT_SOFT_KEY) => Self::LEFT_SOFT_KEY as i32,
             Some(MIDPKeyCode::RIGHT_SOFT_KEY) => Self::RIGHT_SOFT_KEY as i32,
             Some(MIDPKeyCode::CLEAR) => Self::CLEAR as i32,
