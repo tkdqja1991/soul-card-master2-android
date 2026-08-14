@@ -178,7 +178,13 @@ impl CardCanvas {
     async fn key_pressed(jvm: &Jvm, _context: &mut WieJvmContext, this: ClassInstanceRef<Self>, key_code: i32) -> JvmResult<()> {
         tracing::debug!("net.wie.CardCanvas::keyPressed({this:?}, {key_code})");
 
+        let raw_key_code = key_code;
         let key_code = WIPIKeyCode::from_midp_raw(key_code);
+        tracing::warn!(
+            "SCM2 JAVA_BODY: KEY pressed raw={} mapped={}",
+            raw_key_code,
+            key_code
+        );
 
         let cards = jvm.get_field(&this, "cards", "Ljava/util/Vector;").await?;
         let length = jvm.invoke_virtual(&cards, "size", "()I", ()).await?;
