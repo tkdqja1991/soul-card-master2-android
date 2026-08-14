@@ -45,6 +45,9 @@ const installDebugConsoleMirror = () => {
       } else if (message.includes("SCM2 SOCKET:")) {
         const pos = message.indexOf("SCM2 SOCKET:");
         addScm2Log(message.slice(pos));
+      } else if (message.includes("SCM2 JAVA SVC:")) {
+        const pos = message.indexOf("SCM2 JAVA SVC:");
+        addScm2Log(message.slice(pos));
       } else if (message.includes("SCM2 JAVA_BODY:")) {
         const pos = message.indexOf("SCM2 JAVA_BODY:");
         addScm2Log(message.slice(pos));
