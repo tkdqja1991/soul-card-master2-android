@@ -13,6 +13,16 @@ pub mod jvm_support;
 pub type JavaSvcFunctions = Arc<Mutex<BTreeMap<u32, Arc<Box<dyn RegisteredFunction>>>>>;
 
 async fn handle_java_svc(core: &mut ArmCore, svc_functions: &mut JavaSvcFunctions, id: SvcId) -> Result<()> {
+    if id.0 == 0x49056b20 {
+        let (pc, lr) = core.read_pc_lr()?;
+        tracing::warn!(
+            "SCM2 JAVA SVC: getInputStream id={:#010x} pc={:#010x} lr={:#010x}",
+            id.0,
+            pc,
+            lr,
+        );
+    }
+
     let function = {
         let svc_functions = svc_functions.lock();
         svc_functions
