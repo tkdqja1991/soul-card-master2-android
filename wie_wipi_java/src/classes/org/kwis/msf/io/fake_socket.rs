@@ -1,6 +1,7 @@
 use alloc::vec;
 
 use java_class_proto::JavaMethodProto;
+use java_constants::MethodAccessFlags;
 use java_runtime::classes::java::{
     io::{InputStream, OutputStream},
     lang::Object,
@@ -17,50 +18,50 @@ impl FakeSocket {
             parent_class: Some("java/lang/Object"),
             interfaces: vec!["org/kwis/msf/io/Socket"],
             methods: vec![
-                JavaMethodProto::new("<init>", "()V", Self::init, Default::default()),
+                JavaMethodProto::new("<init>", "()V", Self::init, MethodAccessFlags::PUBLIC),
                 JavaMethodProto::new(
                     "accept",
                     "()Lorg/kwis/msf/io/Socket;",
                     Self::accept,
-                    Default::default(),
+                    MethodAccessFlags::PUBLIC,
                 ),
-                JavaMethodProto::new("close", "()V", Self::close, Default::default()),
+                JavaMethodProto::new("close", "()V", Self::close, MethodAccessFlags::PUBLIC),
                 JavaMethodProto::new(
                     "getInputStream",
                     "()Ljava/io/InputStream;",
                     Self::get_input_stream,
-                    Default::default(),
+                    MethodAccessFlags::PUBLIC,
                 ),
                 JavaMethodProto::new(
                     "getMessageCount",
                     "()I",
                     Self::get_message_count,
-                    Default::default(),
+                    MethodAccessFlags::PUBLIC,
                 ),
                 JavaMethodProto::new(
                     "getMessageMaxLength",
                     "()I",
                     Self::get_message_max_length,
-                    Default::default(),
+                    MethodAccessFlags::PUBLIC,
                 ),
                 JavaMethodProto::new(
                     "getOutputStream",
                     "()Ljava/io/OutputStream;",
                     Self::get_output_stream,
-                    Default::default(),
+                    MethodAccessFlags::PUBLIC,
                 ),
-                JavaMethodProto::new("isStream", "()Z", Self::is_stream, Default::default()),
+                JavaMethodProto::new("isStream", "()Z", Self::is_stream, MethodAccessFlags::PUBLIC),
                 JavaMethodProto::new(
                     "recv",
                     "(Lorg/kwis/msf/io/Message;)V",
                     Self::recv,
-                    Default::default(),
+                    MethodAccessFlags::PUBLIC,
                 ),
                 JavaMethodProto::new(
                     "send",
                     "(Lorg/kwis/msf/io/Message;)V",
                     Self::send,
-                    Default::default(),
+                    MethodAccessFlags::PUBLIC,
                 ),
             ],
             fields: vec![],
