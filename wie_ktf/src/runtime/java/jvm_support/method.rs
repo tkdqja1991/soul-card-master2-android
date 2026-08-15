@@ -406,6 +406,15 @@ where
             .name()
             .unwrap_or_else(|_| "<unknown>".to_string());
 
+        tracing::warn!(
+            "SCM2 TRACE: JAVA {}.{}{} lr={:#010x} args={:?}",
+            owner_class,
+            self.proto.name,
+            self.proto.descriptor,
+            lr,
+            raw_args,
+        );
+
         let scm2_socket_method =
             owner_class == "net/wie/FakeSocket"
                 && (self.proto.name == "getInputStream"

@@ -12,6 +12,7 @@ const key_map: Record<string, string> = {
 
 let emulator: WieWeb | null = null;
 let animationStarted = false;
+const scm2Logs: string[] = [];
 
 const setStatus = (message: string) => {
   const el = document.getElementById("status");
@@ -19,11 +20,9 @@ const setStatus = (message: string) => {
 };
 
 const installDebugConsoleMirror = () => {
-  const scm2Logs: string[] = [];
-
   const addScm2Log = (message: string) => {
     scm2Logs.push(message);
-    if (scm2Logs.length > 30) scm2Logs.shift();
+    if (scm2Logs.length > 60) scm2Logs.shift();
     setStatus(scm2Logs.join("\n"));
   };
 
@@ -33,7 +32,12 @@ const installDebugConsoleMirror = () => {
       original(...args);
       const message = args.map(String).join(" ");
 
-      if (message.includes("SCM2 URL.find:")) {
+      if (message.includes("SCM2 TRACE:")) {
+        const pos = message.indexOf("SCM2 TRACE:");
+        addScm2Log(message.slice(pos));
+      } else if (message.includes("panicked at") || message.includes("panic at")) {
+        addScm2Log(`PANIC: ${message}`);
+      } else if (message.includes("SCM2 URL.find:")) {
         const pos = message.indexOf("SCM2 URL.find:");
         addScm2Log(message.slice(pos));
       } else if (message.includes("SCM2 SOCKET WRITE_ARRAY:")) {
@@ -105,7 +109,10 @@ const startUpdateLoop = (wie_web: WieWeb) => {
       const detail = e instanceof Error
         ? `${e.name}: ${e.message}\n${e.stack ?? "(stack 없음)"}`
         : String(e);
-      setStatus(`실행 오류:\n${detail}`);
+      const recent = scm2Logs.length
+        ? `\n\n--- 최근 SCM2 TRACE ---\n${scm2Logs.slice(-24).join("\n")}`
+        : "\n\n(최근 SCM2 TRACE 없음)";
+      setStatus(`실행 오류:\n${detail}${recent}`);
       console.error(e);
     }
   };
