@@ -304,16 +304,50 @@ impl KtfJvmSupport {
         let mut version_gate_branch = [0u8; 2];
         core.read_bytes(0x0012_db46, &mut version_gate_branch)?;
 
-        if version_gate_branch == [0x00, 0xd1] {
-            core.write_bytes(0x0012_db46, &[0x00, 0xe0])?;
-            tracing::warn!(
-                "SCM2 PATCH: version gate forced success at 0x0012db46"
-            );
-        } else {
-            tracing::warn!(
-                "SCM2 PATCH: version gate NOT patched; unexpected bytes={:02x?}",
-                version_gate_branch
-            );
+        match version_gate_branch {
+            [0x00, 0xd1] => {
+                core.write_bytes(0x0012_db46, &[0x00, 0xe0])?;
+                tracing::warn!(
+                    "SCM2 PATCH: version gate forced success at 0x0012db46"
+                );
+            }
+            [0x00, 0xe0] => {
+                tracing::warn!(
+                    "SCM2 PATCH: version gate already patched at 0x0012db46"
+                );
+            }
+            _ => {
+                tracing::warn!(
+                    "SCM2 PATCH: version gate NOT patched; unexpected bytes={:02x?}",
+                    version_gate_branch
+                );
+            }
+        }
+
+        // SCM2 state 200 has a second poll gate at 0x12dbfe. If the status
+        // remains 0, the function returns and the UI stays on "version check".
+        // Reuse the original status==1 success branch target at 0x12dc4e.
+        let mut version_status_branch = [0u8; 2];
+        core.read_bytes(0x0012_dbfe, &mut version_status_branch)?;
+
+        match version_status_branch {
+            [0x26, 0xd0] => {
+                core.write_bytes(0x0012_dbfe, &[0x26, 0xe0])?;
+                tracing::warn!(
+                    "SCM2 PATCH: version status poll forced success at 0x0012dbfe"
+                );
+            }
+            [0x26, 0xe0] => {
+                tracing::warn!(
+                    "SCM2 PATCH: version status poll already patched at 0x0012dbfe"
+                );
+            }
+            _ => {
+                tracing::warn!(
+                    "SCM2 PATCH: version status poll NOT patched; unexpected bytes={:02x?}",
+                    version_status_branch
+                );
+            }
         }
 
         Ok(())
