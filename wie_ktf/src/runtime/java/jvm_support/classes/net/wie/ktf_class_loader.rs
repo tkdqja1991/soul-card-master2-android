@@ -34,7 +34,6 @@ impl KtfClassLoader {
             interfaces: vec![],
             methods: vec![
                 JavaMethodProto::new("<init>", "(Ljava/lang/ClassLoader;Ljava/lang/String;II)V", Self::init, Default::default()),
-                JavaMethodProto::new("loadClass", "(Ljava/lang/String;)Ljava/lang/Class;", Self::load_class, Default::default()),
                 JavaMethodProto::new("findClass", "(Ljava/lang/String;)Ljava/lang/Class;", Self::find_class, Default::default()),
             ],
             fields: vec![
@@ -91,38 +90,6 @@ impl KtfClassLoader {
         jvm.put_field(&mut this, "fnGetClass", "I", native_functions.fn_get_class as i32).await?;
 
         Ok(())
-    }
-
-    async fn load_class(
-        jvm: &Jvm,
-        _: &mut ClassLoaderContext,
-        this: ClassInstanceRef<Self>,
-        name: ClassInstanceRef<String>,
-    ) -> JvmResult<ClassInstanceRef<Class>> {
-        match JavaLangString::to_rust_string(jvm, &name).await {
-            Ok(name_rust) => tracing::warn!("SCM2 TRACE: KTF loadClass name={}", name_rust),
-            Err(err) => tracing::warn!("SCM2 TRACE: KTF loadClass name=<decode error: {:?}>", err),
-        }
-
-        let result: JvmResult<ClassInstanceRef<Class>> = jvm
-            .invoke_special(
-                &this,
-                "java/lang/ClassLoader",
-                "loadClass",
-                "(Ljava/lang/String;)Ljava/lang/Class;",
-                (name,),
-            )
-            .await;
-
-        match &result {
-            Ok(class) => tracing::warn!(
-                "SCM2 TRACE: KTF loadClass return={}",
-                if class.is_null() { "NULL" } else { "CLASS" }
-            ),
-            Err(err) => tracing::warn!("SCM2 TRACE: KTF loadClass error={:?}", err),
-        }
-
-        result
     }
 
     async fn find_class(

@@ -25,14 +25,21 @@
       </div>
 
       <section class="button-container" aria-label="게임 키패드">
-        <p><button data-key="UP">▲</button></p>
-        <p><button data-key="LEFT">◀</button><button data-key="OK" class="ok">OK</button><button data-key="RIGHT">▶</button></p>
-        <p><button data-key="DOWN">▼</button></p>
-        <p class="utility"><button data-key="CLR">CLR</button></p>
-        <p><button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button></p>
-        <p><button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button></p>
-        <p><button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button></p>
-        <p><button data-key="*">*</button><button data-key="0">0</button><button data-key="#">#</button></p>
+        <div class="nav-pad" aria-label="방향 및 확인 키">
+          <button data-key="UP" class="key-up">▲</button>
+          <button data-key="LEFT" class="key-left">◀</button>
+          <button data-key="OK" class="key-ok">OK</button>
+          <button data-key="RIGHT" class="key-right">▶</button>
+          <button data-key="DOWN" class="key-down">▼</button>
+          <button data-key="CLR" class="key-clr">CLR</button>
+        </div>
+
+        <div class="number-pad" aria-label="숫자 키">
+          <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button>
+          <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button>
+          <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button>
+          <button data-key="*">*</button><button data-key="0">0</button><button data-key="#">#</button>
+        </div>
       </section>
     </main>
   </body>

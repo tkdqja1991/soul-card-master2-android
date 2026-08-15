@@ -12,62 +12,10 @@ const key_map: Record<string, string> = {
 
 let emulator: WieWeb | null = null;
 let animationStarted = false;
-const scm2Logs: string[] = [];
 
 const setStatus = (message: string) => {
   const el = document.getElementById("status");
   if (el) el.textContent = message;
-};
-
-const installDebugConsoleMirror = () => {
-  const addScm2Log = (message: string) => {
-    scm2Logs.push(message);
-    if (scm2Logs.length > 60) scm2Logs.shift();
-    setStatus(scm2Logs.join("\n"));
-  };
-
-  for (const level of ["log", "info", "warn", "error"] as const) {
-    const original = console[level].bind(console);
-    console[level] = (...args: unknown[]) => {
-      original(...args);
-      const message = args.map(String).join(" ");
-
-      if (message.includes("SCM2 TRACE:")) {
-        const pos = message.indexOf("SCM2 TRACE:");
-        addScm2Log(message.slice(pos));
-      } else if (message.includes("panicked at") || message.includes("panic at")) {
-        addScm2Log(`PANIC: ${message}`);
-      } else if (message.includes("SCM2 URL.find:")) {
-        const pos = message.indexOf("SCM2 URL.find:");
-        addScm2Log(message.slice(pos));
-      } else if (message.includes("SCM2 SOCKET WRITE_ARRAY:")) {
-        const pos = message.indexOf("SCM2 SOCKET WRITE_ARRAY:");
-        addScm2Log(message.slice(pos));
-      } else if (message.includes("SCM2 SOCKET WRITE:")) {
-        const pos = message.indexOf("SCM2 SOCKET WRITE:");
-        addScm2Log(message.slice(pos));
-      } else if (message.includes("SCM2 SOCKET:")) {
-        const pos = message.indexOf("SCM2 SOCKET:");
-        addScm2Log(message.slice(pos));
-      } else if (message.includes("SCM2 JAVA SVC:")) {
-        const pos = message.indexOf("SCM2 JAVA SVC:");
-        addScm2Log(message.slice(pos));
-      } else if (message.includes("SCM2 JAVA_BODY:")) {
-        const pos = message.indexOf("SCM2 JAVA_BODY:");
-        addScm2Log(message.slice(pos));
-      } else if (message.includes("SCM2 PATCH_CHECK:")) {
-        const pos = message.indexOf("SCM2 PATCH_CHECK:");
-        addScm2Log(message.slice(pos));
-      } else if (
-        message.includes("SCM2 GET_METHOD:") &&
-        !message.includes("CALLSITE REG") &&
-        !message.includes("CALLSITE STACK")
-      ) {
-        const pos = message.indexOf("SCM2 GET_METHOD:");
-        addScm2Log(message.slice(pos));
-      }
-    };
-  }
 };
 
 const bindControls = (wie_web: WieWeb) => {
@@ -106,13 +54,7 @@ const startUpdateLoop = (wie_web: WieWeb) => {
       wie_web.update();
       requestAnimationFrame(update);
     } catch (e) {
-      const detail = e instanceof Error
-        ? `${e.name}: ${e.message}\n${e.stack ?? "(stack 없음)"}`
-        : String(e);
-      const recent = scm2Logs.length
-        ? `\n\n--- 최근 SCM2 TRACE ---\n${scm2Logs.slice(-24).join("\n")}`
-        : "\n\n(최근 SCM2 TRACE 없음)";
-      setStatus(`실행 오류:\n${detail}${recent}`);
+      setStatus("실행 오류");
       console.error(e);
     }
   };
@@ -147,7 +89,6 @@ const bootBundledGame = async () => {
 };
 
 const main = async () => {
-  installDebugConsoleMirror();
   initSettings();
   try {
     await bootBundledGame();

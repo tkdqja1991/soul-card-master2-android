@@ -60,11 +60,6 @@ async fn handle_wipic_svc(core: &mut ArmCore, (system, jvm): &mut (System, Jvm),
     let function_id = id.0 as u16;
     let (_, lr) = core.read_pc_lr()?;
 
-    tracing::warn!(
-        "SCM2 TRACE: WIPIC svc={:#010x} lr={:#010x}",
-        id.0,
-        lr,
-    );
 
     if table_id == WIPICTableId::Kernel && function_id == WIPICKernelMethodId::Reserved1 as u16 {
         return interface::get_wipic_interfaces(core, &mut KtfWIPICContext::new(core.clone(), system.clone(), jvm.clone()))

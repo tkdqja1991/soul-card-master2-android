@@ -295,77 +295,157 @@ body, p {
 }
 
 /* Soul Card Master 2 dedicated Android UI */
-html, body { width: 100%; min-height: 100%; background: #111; overflow-x: hidden; }
-body { font-family: system-ui, -apple-system, sans-serif; color: #eee; }
-.scm2-app { width: min(100vw, 520px); margin: 0 auto; min-height: 100vh; padding: 6px 8px 14px; box-sizing: border-box; }
-.scm2-header { position: relative; height: 34px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; }
-.scm2-header #status { opacity: .7; font-size: 11px; }
-.scm2-header .settings-toggle { position: absolute; right: 0; top: 2px; height: 30px; min-width: 38px; border: 0; border-radius: 7px; font-size: 16px; }
-.scm2-app .canvas-wrapper { width: min(82vw, 360px); aspect-ratio: 3 / 4; background: #000; border-radius: 8px; overflow: hidden; }
-.scm2-app #canvas { image-rendering: pixelated; }
-.scm2-app .settings-panel { top: 6px; right: 6px; }
-.scm2-app .button-container { margin-top: 8px; gap: 4px; }
-.scm2-app .button-container > p { gap: 6px; }
-.scm2-app .button-container > p > button { width: min(19vw, 86px); height: clamp(30px, 5.2vh, 44px); border-radius: 8px; border: 1px solid #555; font-size: clamp(13px, 3.5vw, 18px); font-weight: 700; touch-action: none; }
-.scm2-app .button-container > p > button:active { transform: scale(.96); }
-.scm2-app .button-container .utility { margin-top: 2px; margin-bottom: 2px; }
-@media (max-height: 760px) {
-  .scm2-app .canvas-wrapper { width: min(64vw, 290px); }
-  .scm2-app .button-container > p > button { height: 29px; }
-  .scm2-app .button-container { gap: 2px; }
+html, body {
+  width: 100%;
+  min-height: 100%;
+  background: #111;
+  overflow-x: hidden;
 }
 
-/* SCM2 debug layout: keep tracing logs away from game screen */
-.scm2-header {
-  height: 120px;
-  display: block;
-  position: relative;
-  padding: 4px 42px 4px 4px;
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #eee;
+}
+
+.scm2-app {
+  width: min(100vw, 520px);
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: max(4px, env(safe-area-inset-top)) 8px max(10px, env(safe-area-inset-bottom));
   box-sizing: border-box;
-  overflow: hidden;
 }
 
-.scm2-header > strong {
-  display: block;
-  height: 18px;
-  text-align: center;
+/* Keep the normal UI clean. Runtime diagnostics stay in the console only. */
+.scm2-header {
+  position: relative;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 13px;
 }
 
+.scm2-header > strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .scm2-header #status {
-  display: block;
-  height: 92px;
-  margin-top: 2px;
-  padding: 3px 5px;
-  box-sizing: border-box;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  background: #000;
-  font-family: monospace;
-  font-size: 8px;
-  line-height: 10px;
-  opacity: 1;
-  text-align: left;
+  display: none;
 }
 
+.scm2-header .settings-toggle {
+  position: absolute;
+  right: 0;
+  top: 1px;
+  height: 30px;
+  min-width: 38px;
+  border: 0;
+  border-radius: 7px;
+  font-size: 16px;
+}
+
+/* Original game is 240x320. Scale it up without changing aspect ratio. */
 .scm2-app .canvas-wrapper {
-  width: min(58vw, 250px);
-  margin: 4px auto 0;
+  width: min(82vw, 360px);
+  aspect-ratio: 3 / 4;
+  margin: 0 auto;
+  background: #000;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
+.scm2-app #canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.scm2-app .settings-panel {
+  top: 6px;
+  right: 6px;
+}
+
+/* Compact controls: D-pad uses 3 rows instead of 4, leaving more room for the game. */
+.scm2-app .button-container {
+  width: min(84vw, 330px);
+  margin: 8px auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.scm2-app .nav-pad,
+.scm2-app .number-pad {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.scm2-app .nav-pad {
+  grid-template-areas:
+    ". up ."
+    "left ok right"
+    ". down clr";
+}
+
+.scm2-app .key-up { grid-area: up; }
+.scm2-app .key-left { grid-area: left; }
+.scm2-app .key-ok { grid-area: ok; }
+.scm2-app .key-right { grid-area: right; }
+.scm2-app .key-down { grid-area: down; }
+.scm2-app .key-clr { grid-area: clr; }
+
+.scm2-app .button-container button {
+  margin: 0;
+  border-radius: 9px;
+  border: 1px solid #555;
+  font-weight: 700;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.scm2-app .nav-pad button {
+  height: clamp(38px, 5.4vh, 48px);
+  font-size: clamp(15px, 4vw, 20px);
+}
+
+.scm2-app .number-pad button {
+  height: clamp(34px, 4.8vh, 44px);
+  font-size: clamp(14px, 3.7vw, 18px);
+}
+
+.scm2-app .button-container button:active {
+  transform: scale(.96);
+}
+
+/* Short phones: preserve the larger game but tighten controls a little. */
 @media (max-height: 760px) {
-  .scm2-header {
-    height: 105px;
-  }
-
-  .scm2-header #status {
-    height: 77px;
-    font-size: 7px;
-    line-height: 9px;
-  }
-
   .scm2-app .canvas-wrapper {
-    width: min(52vw, 220px);
+    width: min(74vw, 320px);
+  }
+
+  .scm2-app .button-container {
+    margin-top: 5px;
+    gap: 5px;
+  }
+
+  .scm2-app .nav-pad,
+  .scm2-app .number-pad {
+    gap: 4px;
+  }
+
+  .scm2-app .nav-pad button {
+    height: 34px;
+  }
+
+  .scm2-app .number-pad button {
+    height: 31px;
   }
 }
