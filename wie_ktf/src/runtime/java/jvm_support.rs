@@ -299,21 +299,20 @@ impl KtfJvmSupport {
         );
 
         // SCM2 offline patch:
-        // 0x12dacc is `beq 0x12dad0` after checking the version response.
-        // Turn it into an unconditional `b 0x12dad0`, but only when the
-        // expected original instruction is present.
-        let mut version_check_branch = [0u8; 2];
-        core.read_bytes(0x0012_dacc, &mut version_check_branch)?;
+        // State 200 performs an additional a()Z gate at 0x12db46.
+        // Force the success path at 0x12db4a regardless of that result.
+        let mut version_gate_branch = [0u8; 2];
+        core.read_bytes(0x0012_db46, &mut version_gate_branch)?;
 
-        if version_check_branch == [0x00, 0xd0] {
-            core.write_bytes(0x0012_dacc, &[0x00, 0xe0])?;
+        if version_gate_branch == [0x00, 0xd1] {
+            core.write_bytes(0x0012_db46, &[0x00, 0xe0])?;
             tracing::warn!(
-                "SCM2 PATCH: version check forced success at 0x0012dacc"
+                "SCM2 PATCH: version gate forced success at 0x0012db46"
             );
         } else {
             tracing::warn!(
-                "SCM2 PATCH: version check NOT patched; unexpected bytes={:02x?}",
-                version_check_branch
+                "SCM2 PATCH: version gate NOT patched; unexpected bytes={:02x?}",
+                version_gate_branch
             );
         }
 
