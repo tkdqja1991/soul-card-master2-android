@@ -286,12 +286,12 @@ pub async fn get_cur_program_id(_context: &mut dyn WIPICContext) -> Result<WIPIC
 pub async fn get_program_name(context: &mut dyn WIPICContext, name_buf: WIPICWord, buf_size: i32) -> Result<i32> {
     tracing::debug!("MC_knlGetProgramName({name_buf:#x}, {buf_size})");
 
-    let aid = context.system().aid();
+    let aid = context.system().aid().to_string();
     // The working SCM2 PC launcher supplies `--program-name 010100D2`.
     // MC_knlGetProgramName is the game-visible installation slot, which is
     // not necessarily the package AID.  Mirror that known-good value only
     // for Soul Card Master 2 while preserving the normal behavior elsewhere.
-    let program_name = if aid == "010261FB" { "010100D2" } else { aid };
+    let program_name = if aid == "010261FB" { "010100D2" } else { aid.as_str() };
 
     if buf_size < program_name.len() as i32 + 1 {
         return Ok(-18); // M_E_SHORTBUF
