@@ -98,20 +98,3 @@ pattern = "70 b5 0b 1c 03 43 03 22 13 40 04 1c"
 [[entry.hook]]
 kind = "strlen"
 pattern = "30 b5 03 23 03 40 04 1c 00 2b"
-
-# Soul Card Master 2 (KTF) offline version-check bypass.
-# State 200 has two separate success gates. The first checks an a()Z result;
-# the second polls a network/version status and returns every frame unless it
-# becomes 1 or 2. Force both branches to the existing success paths.
-[[entry.patch]]
-pattern = "00 06 00 28 00 d1 b5 e0 b7 48 41 46 50 44"
-offset = 4
-bytes = "00 e0"
-expect = "00 d1"
-
-[[entry.patch]]
-pattern = "06 1c 01 28 26 d0 02 28 01 d0 ff f7 fc fb"
-offset = 4
-bytes = "26 e0"
-expect = "26 d0"
-
