@@ -51,6 +51,9 @@ const installDebugConsoleMirror = () => {
       } else if (message.includes("SCM2 JAVA_BODY:")) {
         const pos = message.indexOf("SCM2 JAVA_BODY:");
         addScm2Log(message.slice(pos));
+      } else if (message.includes("SCM2 PATCH_CHECK:")) {
+        const pos = message.indexOf("SCM2 PATCH_CHECK:");
+        addScm2Log(message.slice(pos));
       } else if (
         message.includes("SCM2 GET_METHOD:") &&
         !message.includes("CALLSITE REG") &&
