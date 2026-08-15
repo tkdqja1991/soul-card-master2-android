@@ -46,6 +46,10 @@ jobs:
         working-directory: wie_app
         run: cargo tauri android init --ci
 
+      - name: Generate Soul Card Master 2 app icons
+        working-directory: wie_app
+        run: cargo tauri icon app-icon.png
+
       - name: Build ARM64 APK
         uses: tauri-apps/tauri-action@v1
         with:
