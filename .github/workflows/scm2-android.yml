@@ -78,7 +78,7 @@ jobs:
           "$BUILD_TOOLS/apksigner" sign             --ks scm2-release.jks             --ks-pass pass:scm2android             --key-pass pass:scm2android             --ks-key-alias scm2             --out dist/SoulCardMaster2-WIE-arm64-signed.apk             dist/SoulCardMaster2-WIE-arm64-aligned.apk
           "$BUILD_TOOLS/apksigner" verify --verbose             dist/SoulCardMaster2-WIE-arm64-signed.apk
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: SoulCardMaster2-Android-Signed-APK
           path: dist/SoulCardMaster2-WIE-arm64-signed.apk
