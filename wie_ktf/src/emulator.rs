@@ -86,7 +86,13 @@ impl KtfEmulator {
         let system = System::new(platform, pid, aid, KtfTaskRunner { core: core.clone() });
 
         for (path, data) in files {
-            let path = path.trim_start_matches("P/");
+            // KTF packages in the wild use both `P/` and `p/` for the
+            // app-private persistent-file seed directory.  Expose either
+            // spelling at the guest root (e.g. p/certify -> /certify).
+            let path = path
+                .strip_prefix("P/")
+                .or_else(|| path.strip_prefix("p/"))
+                .unwrap_or(path);
             system.filesystem().add_virtual(path, data.clone());
         }
 
