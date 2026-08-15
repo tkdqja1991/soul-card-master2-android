@@ -23,7 +23,7 @@ use wie_core_arm::{
     Allocator, ArmCore, EmulatedFunction, EmulatedFunctionParam, RUN_FUNCTION_LR, RegisteredFunction, RegisteredFunctionHolder, ResultWriter,
 };
 use wie_jvm_support::native::{NativeJavaValueCodec, decode_method_arguments, encode_method_arguments, method_argument_word_count};
-use wie_util::{ByteWrite, Result, WieError, read_generic, write_generic};
+use wie_util::{ByteRead, ByteWrite, Result, WieError, read_generic, write_generic};
 
 use crate::runtime::java::jvm_support::JavaClassDefinition;
 use crate::runtime::{SVC_CATEGORY_JAVA, java::JavaSvcFunctions};
@@ -422,6 +422,21 @@ where
                     && raw_args.get(3).copied().unwrap_or(u32::MAX) <= 16);
 
         let scm2_trace_method = scm2_socket_method || scm2_stream_method;
+
+        if scm2_socket_method {
+            let mut gate_bytes = [0u8; 2];
+
+            if core.read_bytes(0x0012_db46, &mut gate_bytes).is_ok() {
+                tracing::warn!(
+                    "SCM2 PATCH_CHECK: 0x0012db46 bytes={:02x?}",
+                    gate_bytes
+                );
+            } else {
+                tracing::warn!(
+                    "SCM2 PATCH_CHECK: failed to read 0x0012db46"
+                );
+            }
+        }
 
         if scm2_trace_method {
             tracing::warn!(
