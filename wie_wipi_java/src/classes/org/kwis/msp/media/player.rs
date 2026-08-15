@@ -64,6 +64,14 @@ impl Player {
     async fn play_clip(jvm: &Jvm, _context: &mut WieJvmContext, clip: ClassInstanceRef<Clip>, repeat: bool) -> JvmResult<bool> {
         tracing::debug!("org.kwis.msp.media.Player::play({clip:?}, {repeat})");
 
+        // Some KTF games use a null Clip as "nothing is loaded yet".
+        // Do not dereference it through Clip::player(), because that makes
+        // RustJava unwrap a missing class instance and panic.
+        if clip.is_null() {
+            tracing::debug!("org.kwis.msp.media.Player::play(null, {repeat}) -> false");
+            return Ok(false);
+        }
+
         let player = Clip::player(jvm, &clip).await?;
 
         if !player.is_null() {
@@ -77,6 +85,13 @@ impl Player {
 
     async fn stop_clip(jvm: &Jvm, _: &mut WieJvmContext, clip: ClassInstanceRef<Clip>) -> JvmResult<bool> {
         tracing::debug!("org.kwis.msp.media.Player::stop({clip:?})");
+
+        // SCM2 calls Player.stop((Clip)null) during startup. KTF treats this
+        // as a harmless no-op. Avoid dereferencing the null Clip in RustJava.
+        if clip.is_null() {
+            tracing::debug!("org.kwis.msp.media.Player::stop(null) -> false");
+            return Ok(false);
+        }
 
         let player = Clip::player(jvm, &clip).await?;
 
